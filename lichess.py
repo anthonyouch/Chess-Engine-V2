@@ -42,10 +42,17 @@ while True:
     # if response == "challenge":
 
     for line in response.iter_lines():
+        if line:
+            print(json.loads(line))
+            if json.loads(line)['type'] == "challenge":
+                print(json.loads(line)['challenge']['id'])
+                lichessAPI.accept_challenge(json.loads(line)['challenge']['id'])
 
-        if json.loads(line)['type'] == "challenge":
-            print(json.loads(line)['challenge']['id'])
-            lichessAPI.accept_challenge(json.loads(line)['challenge']['id'])
+            elif json.loads(line)['type'] == "gameStart":
+                print(json.loads(line)['game']['gameId'])
+                gameId = json.loads(line)['game']['gameId']
+                # for now assume we're white and make e2e4 move
+                lichessAPI.make_move(gameId, "e2e4")
             
 
 
