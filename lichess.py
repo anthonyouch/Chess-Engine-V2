@@ -14,18 +14,13 @@ class LichessAPI:
         self.session.headers.update(self.header)
 
     def get_event(self):
-        """Send a GET Request to lichess.org to get event
-        Each non-empty line is a JSON object containing a type field. Possible values are:
-        gameStart Start of a game
-        gameFinish Completion of a game
-        challenge A player sends you a challenge or you challenge someone
-        challengeCanceled A player cancels their challenge to you
-        challengeDeclined The opponent declines your challenge
-        """
         url = "https://lichess.org/api/stream/event"
-
         response = self.session.get(url, stream=True)
-        return response
+        for line in response.iter_lines():
+            if line:
+                print(json.loads(line))
+                return json.loads(line)
+        return ("ERROR", response)
 
     def accept_challenge(self, challengeId):
         url = f"https://lichess.org/api/challenge/{challengeId}/accept"
@@ -41,18 +36,25 @@ while True:
     response = lichessAPI.get_event()
     # if response == "challenge":
 
-    for line in response.iter_lines():
-        if line:
-            print(json.loads(line))
-            if json.loads(line)['type'] == "challenge":
-                print(json.loads(line)['challenge']['id'])
-                lichessAPI.accept_challenge(json.loads(line)['challenge']['id'])
-
-            elif json.loads(line)['type'] == "gameStart":
-                print(json.loads(line)['game']['gameId'])
-                gameId = json.loads(line)['game']['gameId']
-                # for now assume we're white and make e2e4 move
-                lichessAPI.make_move(gameId, "e2e4")
-            
+    # print("response: ", response)
+    responseType = response['type']
+    if responseType == "challenge":
+        challengeID = response["challenge"]["id"]
+        lichessAPI.accept_challenge(challengeID)
+    elif responseType == "gameStart":
+        gameId = response['game']['gameId']
+        lichessAPI.make_move(gameId, "e2e4")
 
 
+    # for line in response.iter_lines():
+    #     if line:
+    #         print(json.loads(line))
+    #         if json.loads(line)['type'] == "challenge":
+    #             print(json.loads(line)['challenge']['id'])
+    #             lichessAPI.accept_challenge(json.loads(line)['challenge']['id'])
+    #
+    #         elif json.loads(line)['type'] == "gameStart":
+    #             print(json.loads(line)['game']['gameId'])
+    #             gameId = json.loads(line)['game']['gameId']
+    #             # for now assume we're white and make e2e4 move
+    #             lichessAPI.make_move(gameId, "e2e4")
